@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma migrate deploy"
+    "postinstall": "prisma migrate deploy && prisma generate"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
