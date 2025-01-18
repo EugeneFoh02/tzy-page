@@ -21,7 +21,7 @@ const projectsData = [
     description: "TZY third Intra Tournament",
     image: "/images/Tournaments/3rdIntraTournament.jpg",
     tag: ["All", "Tournaments"],
-    gitUrl: "/registrationform",
+    gitUrl: "https://docs.google.com/forms/d/1gk0eg0Pi6coMPjdAgZoCJU44i1Rvqy2-_PzQT7WC47c/edit",
     previewUrl: "/images/Tournaments/3rdIntraTournament.jpg",
   },
   {
