@@ -30,10 +30,10 @@ const AchievementsSections = () => {
             key={index}
             className="flex flex-col items-center justify-center mx-4"
           >
-            <h2 className="text-white text-4xl font-bold">
+            <h2 className="text-black text-4xl font-bold">
               {achievement.value}
             </h2>
-            <p className="text-[#ADB7BE] text-base">{achievement.metric}</p>
+            <p className="text-gray-700 text-base">{achievement.metric}</p>
           </div>
         );
       })}

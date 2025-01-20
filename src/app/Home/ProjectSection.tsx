@@ -61,10 +61,10 @@ const ProjectSection = () => {
 
   return (
     <section id="projects" className="text-white scroll-mt-28">
-      <h2 className="text-center text-4xl font-bold text-white mt-4 mb-8 md:mb-12">
+      <h2 className="text-center text-4xl font-bold text-black mt-4 mb-8 md:mb-12">
         Our Tournaments and Social Game
       </h2>
-      <div className="text-white flex  flex-row items-center justify-center gap-2 py-6 ">
+      <div className="text-black flex  flex-row items-center justify-center gap-2 py-6 ">
         <ProjectTag
           onClick={handleTagChange}
           name="All"
@@ -91,6 +91,7 @@ const ProjectSection = () => {
             tag={project.tag}
             gitUrl={project.gitUrl}
             previewUrl={project.previewUrl}
+            
           />
         ))}
       </div>

@@ -46,7 +46,7 @@ const AboutSection = () => {
   };
 
   return (
-    <section id="about" className="text-white scroll-mt-16">
+    <section id="about" className="text-black scroll-mt-16">
       <div className="md:grid md:grid-cols-2 gap-8 items-center py-8 px-4 xl:gap-16 sm:py-16 xl:px-16">
         <Image
           src="/images/about.jpg"
@@ -55,7 +55,7 @@ const AboutSection = () => {
           height={500}
         />
         <div className="mt-8 md:mt-0  text-left flex flex-col h-full">
-          <h2 className="text-4xl font-bold text-white mb-4">About Us</h2>
+          <h2 className="text-4xl font-bold text-black mb-4">About Us</h2>
           <p className="text-base lg:text-lg">We are ...</p>
           <div className="flex flex-row mt-4">
             <TabButton

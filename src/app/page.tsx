@@ -8,14 +8,13 @@ import ProjectSection from "./Home/ProjectSection";
 
 export default function Home() {
   return (
-    <main className="flex flex-col bg-black">
+    <main className="flex flex-col bg-[#F4EBEF]">
       <NavBar />
-      <div className="container mt-24 mx-auto px-12 py-4">
+      <div className="container mt-24 mx-auto px-12 py-8">
         <HeroSection />
         <AchievementsSections />
         <AboutSection />
         <ProjectSection />
-        <EmailSection />
       </div>
       <Footer/>
     </main>

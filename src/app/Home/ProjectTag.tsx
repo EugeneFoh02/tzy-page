@@ -8,8 +8,8 @@ interface ProjectTagProps {
 
 const ProjectTag: React.FC<ProjectTagProps> = ({ name, onClick, isSelected }) => {
   const buttonStyles = isSelected
-    ? "text-white bg-purple-500"
-    : "text-[#ADB7BE] border-slate-600 hover:border-white";
+    ? "text-black bg-[#C4B3B7] border-black"
+    : "text-gray-500 border-gray-500 hover:border-gray-700";
 
   return (
     <button
