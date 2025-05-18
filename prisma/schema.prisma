@@ -11,19 +11,10 @@ datasource db {
 }
 
 model Post {
-  id            Int           @id @default(autoincrement())
-  fullName      String       
-  shirtSize     String        
-  nameOnShirt   String?       
-  contactNumber String        
-  paymentSlip   String?       
-  paymentMethod PaymentMethod 
-  createdAt     DateTime      @default(now())
-  registered    Boolean       @default(false)
-}
-
-enum PaymentMethod {
-  bank
-  tng
-  other
+  id         Int      @id @default(autoincrement())
+  fullName1  String   
+  fullName2  String?  // Optional second name
+  ic1        String   // Identification number 1
+  ic2        String?  // Optional second identification number
+  createdAt  DateTime @default(now())
 }

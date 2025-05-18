@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, MapPinIcon } from "lucide-react";
+import { CalendarIcon, MapPinIcon, Plus } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole"; // role hook
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { realtimeDb } from "@/lib/firebase";
+import { ref, push, onValue } from "firebase/database";
 
 interface Tournament {
   id: string;
@@ -24,50 +37,6 @@ interface Tournament {
 interface MonthlyTournaments {
   [key: string]: Tournament[];
 }
-
-const sampleTournaments: MonthlyTournaments = {
-  January: [
-    {
-      id: "1",
-      name: "3rd TZY Intra Tournament",
-      Date: "9 FEB 2025",
-      location: "ACS, Ipoh",
-      category: "TZY Member",
-    },
-    {
-      id: "2",
-      name: "Example 1",
-      Date: "Jan 17 - Jan 22",
-      location: "ACS, Ipoh",
-      category: "Bakat Baru",
-    },
-    {
-      id: "3",
-      name: "Example 2",
-      Date: "Mar 7",
-      location: "ACS, Ipoh",
-      category: "Junior Cup",
-    },
-  ],
-  March: [
-    {
-      id: "4",
-      name: "Example 3",
-      Date: "Mar 14",
-      location: "ACS, Ipoh",
-      category: "Novice",
-    },
-  ],
-  April: [
-    {
-      id: "5",
-      name: "Example 4",
-      Date: "Apr 11",
-      location: "ACS, Ipoh",
-      category: "Semi Pro",
-    },
-  ],
-};
 
 const categories = [
   "All Categories",
@@ -123,7 +92,6 @@ function TournamentCard({
             </Badge>
           </CardContent>
         </Card>
-        {/* Timeline dot */}
         <motion.div
           className={`absolute ${
             isLeft ? "right-0 translate-x-1/2" : "left-0 -translate-x-1/2"
@@ -136,23 +104,91 @@ function TournamentCard({
 }
 
 export default function AnimatedTournamentListing() {
+  const role = useUserRole(); // user role hook
+
   const [selectedCategory, setSelectedCategory] =
     useState<string>("All Categories");
 
-  const filteredTournaments = Object.entries(sampleTournaments).reduce(
-    (acc, [month, tournaments]) => {
-      const filteredMonthTournaments = tournaments.filter(
-        (tournament) =>
-          selectedCategory === "All Categories" ||
-          tournament.category === selectedCategory
-      );
-      if (filteredMonthTournaments.length > 0) {
-        acc[month] = filteredMonthTournaments;
-      }
-      return acc;
-    },
-    {} as MonthlyTournaments
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const [newTournament, setNewTournament] = useState<Omit<Tournament, "id">>({
+    name: "",
+    Date: "",
+    location: "",
+    category: "",
+  });
+
+  const [firebaseTournaments, setFirebaseTournaments] = useState<Tournament[]>(
+    []
   );
+
+  // Listen to realtime DB tournaments data
+  useEffect(() => {
+    const tournamentsRef = ref(realtimeDb, "tournaments");
+    const unsubscribe = onValue(tournamentsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const list = Object.entries(data).map(([id, val]) => ({
+          id,
+          ...(val as Omit<Tournament, "id">),
+        }));
+        setFirebaseTournaments(list);
+      } else {
+        setFirebaseTournaments([]);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Group tournaments by month extracted from Date string
+  const groupedTournaments = firebaseTournaments.reduce((acc, tournament) => {
+    // Extract month string from Date (simple heuristic)
+    // Assuming Date string starts with month like "Jan", "Feb", etc.
+    const monthMatch = tournament.Date.match(
+      /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i
+    );
+    const month = monthMatch ? monthMatch[0] : "Other";
+
+    // Filter by selected category
+    if (
+      selectedCategory === "All Categories" ||
+      tournament.category === selectedCategory
+    ) {
+      if (!acc[month]) acc[month] = [];
+      acc[month].push(tournament);
+    }
+
+    return acc;
+  }, {} as MonthlyTournaments);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setNewTournament((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddTournament = async () => {
+    if (
+      !newTournament.name ||
+      !newTournament.Date ||
+      !newTournament.location ||
+      !newTournament.category
+    ) {
+      alert("Please fill in all fields");
+      return;
+    }
+
+    try {
+      await push(ref(realtimeDb, "tournaments"), newTournament);
+      setDialogOpen(false);
+      setNewTournament({ name: "", Date: "", location: "", category: "" });
+    } catch (error) {
+      console.error("Error saving tournament:", error);
+      alert("Failed to save tournament. Please try again.");
+    }
+  };
 
   return (
     <div className="pt-32 bg-[#F4EBEF] min-h-[calc(100vh-64px)]">
@@ -165,37 +201,48 @@ export default function AnimatedTournamentListing() {
           style={{
             backgroundImage: "url(/images/tzybanner.jpg)",
             backgroundSize: "cover",
-            backgroundPosition: "",
-            color: "white", // Ensure text is readable
-            padding: "48px", // Adjust padding as needed
-            
+            backgroundPosition: "center",
+            color: "white",
+            padding: "48px",
           }}
         >
           TZY Tournament Schedule
         </motion.h1>
-        <motion.div
-          className="mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-        >
-          <Select onValueChange={(value) => setSelectedCategory(value)}>
-            <SelectTrigger className="w-full sm:w-[300px]">
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </motion.div>
 
-        {/* Timeline container */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+          <motion.div
+            className="w-full sm:w-[300px]"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            <Select onValueChange={(value) => setSelectedCategory(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </motion.div>
+
+          {role === "admin" && (
+            <Button
+              onClick={() => setDialogOpen(true)}
+              className="flex items-center gap-2"
+              variant="default"
+            >
+              <Plus className="w-4 h-4" />
+              Add Tournament
+            </Button>
+          )}
+        </div>
+
         <div className="relative">
-          {/* Vertical timeline line */}
           <motion.div
             className="absolute left-1/2 top-0 bottom-0 w-px bg-primary/20 -translate-x-1/2"
             initial={{ scaleY: 0 }}
@@ -215,29 +262,10 @@ export default function AnimatedTournamentListing() {
               },
             }}
           >
-            {Object.entries(filteredTournaments).map(([month, tournaments]) => (
-              <motion.div
-                key={month}
-                className="relative"
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-              >
-                {/* Month label */}
-                <div className="flex justify-center mb-8">
-                  <motion.h2
-                    className="text-2xl font-semibold bg-[#F4EBEF] px-4 relative z-10"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {month}
-                  </motion.h2>
-                </div>
-
-                {/* Tournament cards */}
-                <div className="-space-y-8">
+            {Object.entries(groupedTournaments).map(([month, tournaments]) => (
+              <div key={month}>
+                <h2 className="text-3xl font-bold text-center mb-8">{month}</h2>
+                <div>
                   {tournaments.map((tournament, index) => (
                     <TournamentCard
                       key={tournament.id}
@@ -246,10 +274,133 @@ export default function AnimatedTournamentListing() {
                     />
                   ))}
                 </div>
-              </motion.div>
+              </div>
             ))}
+
+            {/* If no tournaments in filtered category */}
+            {Object.keys(groupedTournaments).length === 0 && (
+              <p className="text-center text-muted-foreground mt-12">
+                No tournaments found for selected category.
+              </p>
+            )}
           </motion.div>
         </div>
+
+        {/* Redesigned Add Tournament Dialog */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="sm:max-w-md w-full rounded-lg bg-white p-6 shadow-lg">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-semibold text-gray-900 mb-1">
+                Add Tournament
+              </DialogTitle>
+              <DialogDescription className="text-sm text-gray-600 mb-6">
+                Please fill in the tournament details below.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form
+              className="grid gap-5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAddTournament();
+              }}
+            >
+              <label
+                htmlFor="name"
+                className="text-sm font-medium text-gray-700"
+              >
+                Tournament Name
+              </label>
+              <input
+                id="name"
+                className="input-field rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type="text"
+                name="name"
+                placeholder="Enter tournament name"
+                value={newTournament.name}
+                onChange={handleInputChange}
+                required
+              />
+
+              <label
+                htmlFor="date"
+                className="text-sm font-medium text-gray-700"
+              >
+                Date
+              </label>
+              <input
+                id="date"
+                className="input-field rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type="text"
+                name="Date"
+                placeholder="e.g., Apr 2025"
+                value={newTournament.Date}
+                onChange={handleInputChange}
+                required
+              />
+
+              <label
+                htmlFor="location"
+                className="text-sm font-medium text-gray-700"
+              >
+                Location
+              </label>
+              <input
+                id="location"
+                className="input-field rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type="text"
+                name="location"
+                placeholder="Enter location"
+                value={newTournament.location}
+                onChange={handleInputChange}
+                required
+              />
+
+              <label
+                htmlFor="category"
+                className="text-sm font-medium text-gray-700"
+              >
+                Category
+              </label>
+              <select
+                id="category"
+                name="category"
+                value={newTournament.category}
+                onChange={handleInputChange}
+                className="input-field rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="" disabled>
+                  Select Category
+                </option>
+                {categories
+                  .filter((cat) => cat !== "All Categories")
+                  .map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+              </select>
+
+              <DialogFooter className="mt-6 flex justify-end space-x-3">
+                <DialogClose asChild>
+                  <button
+                    type="button"
+                    className="rounded bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 transition"
+                  >
+                    Cancel
+                  </button>
+                </DialogClose>
+                <button
+                  type="submit"
+                  className="rounded bg-blue-600 px-5 py-2 text-white hover:bg-blue-700 transition"
+                >
+                  Save
+                </button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
