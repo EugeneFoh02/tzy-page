@@ -28,8 +28,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-
-
 export default function AnnouncementsPage() {
   const role = useUserRole();
 
@@ -130,18 +128,14 @@ export default function AnnouncementsPage() {
           <h1 className="text-3xl md:text-4xl font-bold text-black">
             Announcements
           </h1>
-          {role === null ? (
-            <Skeleton className="w-40 h-10 rounded" />
-          ) : (
-            role === "admin" && (
-              <Button
-                onClick={() => setDialogOpen(true)}
-                className="flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Announcement
-              </Button>
-            )
+          {role === "admin" && (
+            <Button
+              onClick={() => setDialogOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Announcement
+            </Button>
           )}
         </div>
 
@@ -159,96 +153,105 @@ export default function AnnouncementsPage() {
 
         {/* Redesigned Add Announcement Dialog */}
         {dialogOpen && (
-  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-    <DialogContent className="sm:max-w-md w-full rounded-lg p-6">
-      <DialogHeader>
-        <DialogTitle>Add Announcement</DialogTitle>
-        <DialogDescription>
-          Fill in the details below to create a new announcement.
-        </DialogDescription>
-      </DialogHeader>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogContent className="sm:max-w-md w-full rounded-lg p-6">
+              <DialogHeader>
+                <DialogTitle>Add Announcement</DialogTitle>
+                <DialogDescription>
+                  Fill in the details below to create a new announcement.
+                </DialogDescription>
+              </DialogHeader>
 
-      <form
-        className="grid gap-5 mt-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSave();
-        }}
-      >
-        <div>
-          <label htmlFor="title" className="block mb-1 text-sm font-medium">
-            Title
-          </label>
-          <Input
-            id="title"
-            type="text"
-            name="title"
-            placeholder="Title"
-            value={form.title}
-            onChange={handleChange}
-            required
-          />
-        </div>
+              <form
+                className="grid gap-5 mt-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSave();
+                }}
+              >
+                <div>
+                  <label
+                    htmlFor="title"
+                    className="block mb-1 text-sm font-medium"
+                  >
+                    Title
+                  </label>
+                  <Input
+                    id="title"
+                    type="text"
+                    name="title"
+                    placeholder="Title"
+                    value={form.title}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-        <div>
-          <label
-            htmlFor="description"
-            className="block mb-1 text-sm font-medium"
-          >
-            Description
-          </label>
-          <Textarea
-            id="description"
-            name="description"
-            placeholder="Description"
-            value={form.description}
-            onChange={handleChange}
-            rows={4}
-            required
-          />
-        </div>
+                <div>
+                  <label
+                    htmlFor="description"
+                    className="block mb-1 text-sm font-medium"
+                  >
+                    Description
+                  </label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    placeholder="Description"
+                    value={form.description}
+                    onChange={handleChange}
+                    rows={4}
+                    required
+                  />
+                </div>
 
-        <div>
-          <label htmlFor="date" className="block mb-1 text-sm font-medium">
-            Date
-          </label>
-          <Input
-            id="date"
-            type="date"
-            name="date"
-            value={form.date}
-            onChange={handleChange}
-            required
-          />
-        </div>
+                <div>
+                  <label
+                    htmlFor="date"
+                    className="block mb-1 text-sm font-medium"
+                  >
+                    Date
+                  </label>
+                  <Input
+                    id="date"
+                    type="date"
+                    name="date"
+                    value={form.date}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-        <div>
-          <label htmlFor="category" className="block mb-1 text-sm font-medium">
-            Category
-          </label>
-          <Input
-            id="category"
-            type="text"
-            name="category"
-            placeholder="Category"
-            value={form.category}
-            onChange={handleChange}
-            required
-          />
-        </div>
+                <div>
+                  <label
+                    htmlFor="category"
+                    className="block mb-1 text-sm font-medium"
+                  >
+                    Category
+                  </label>
+                  <Input
+                    id="category"
+                    type="text"
+                    name="category"
+                    placeholder="Category"
+                    value={form.category}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-        <DialogFooter className="flex justify-end gap-3 mt-6">
-          <DialogClose asChild>
-            <Button variant="outline" type="button">
-              Cancel
-            </Button>
-          </DialogClose>
-          <Button type="submit">Save</Button>
-        </DialogFooter>
-      </form>
-    </DialogContent>
-  </Dialog>
-)}
+                <DialogFooter className="flex justify-end gap-3 mt-6">
+                  <DialogClose asChild>
+                    <Button variant="outline" type="button">
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  <Button type="submit">Save</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </div>
   );
