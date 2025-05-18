@@ -5,12 +5,12 @@ import { getFirestore } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAmTjyULRP6CQcYjHfMRGFyjWwEARlckiA",
-  authDomain: "tzybadminton.firebaseapp.com",
-  projectId: "tzybadminton",
-  storageBucket: "tzybadminton.appspot.com",
-  messagingSenderId: "237934267671",
-  appId: "1:237934267671:web:daa63faf66899eb9dafb52",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -18,5 +18,5 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 export const db = getFirestore(app);
-export const realtimeDb = getDatabase(app, "https://tzybadminton-default-rtdb.asia-southeast1.firebasedatabase.app/");
+export const realtimeDb = getDatabase(app, process.env.NEXT_PUBLIC_FIREBASE_DB_URL);
 export { app };
