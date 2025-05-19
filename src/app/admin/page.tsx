@@ -6,6 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { ref, get, child } from "firebase/database";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db, realtimeDb } from "@/lib/firebase";
+import * as XLSX from "xlsx";
 
 const CATEGORIES = [
   "SINGLE UNDER 10",
@@ -19,8 +20,12 @@ const CATEGORIES = [
 
 export default function AdminEntriesPage() {
   const router = useRouter();
-  const [entriesByCategory, setEntriesByCategory] = useState<Record<string, any[]>>({});
+  const [entriesByCategory, setEntriesByCategory] = useState<
+    Record<string, any[]>
+  >({});
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -29,7 +34,6 @@ export default function AdminEntriesPage() {
         return;
       }
 
-      // 🔐 Check admin role from Firestore
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const role = userDoc.exists() ? userDoc.data()?.role : null;
 
@@ -38,11 +42,9 @@ export default function AdminEntriesPage() {
         return;
       }
 
-      // 🔄 Fetch registrations from Realtime Database
       const snapshot = await get(child(ref(realtimeDb), "registrations"));
       const rawData = snapshot.val() || {};
 
-      // 📊 Group entries by category
       const grouped: Record<string, any[]> = {};
       CATEGORIES.forEach((cat) => (grouped[cat] = []));
       Object.values(rawData).forEach((entry: any) => {
@@ -60,54 +62,177 @@ export default function AdminEntriesPage() {
 
   if (loading) return <div className="p-4">Loading...</div>;
 
+  function filterEntries(entries: any[], category: string) {
+    if (!searchTerm.trim()) return entries;
+    const lowerTerm = searchTerm.toLowerCase();
+
+    return entries.filter((entry) => {
+      const player1Match = entry.player1Name?.toLowerCase().includes(lowerTerm);
+      if (player1Match) return true;
+
+      if (category.includes("DOUBLE")) {
+        const player2Match = entry.player2Name
+          ?.toLowerCase()
+          .includes(lowerTerm);
+        return player2Match;
+      }
+      return false;
+    });
+  }
+
+  function exportToExcel() {
+    const workbook = XLSX.utils.book_new();
+    const categoriesToExport =
+      selectedCategory === "ALL" ? CATEGORIES : [selectedCategory];
+
+    categoriesToExport.forEach((category) => {
+      const entries = filterEntries(
+        entriesByCategory[category] || [],
+        category
+      );
+      if (entries.length === 0) return;
+
+      const formatted = entries.map((entry) => {
+        const row: any = {
+          "Player 1 Name": entry.player1Name,
+          "Player 1 IC": entry.player1IC,
+          "Player 1 Shirt Size": entry.player1ShirtSize,
+          Academy: entry.academy,
+        };
+        if (category.includes("DOUBLE")) {
+          row["Player 2 Name"] = entry.player2Name || "-";
+          row["Player 2 IC"] = entry.player2IC || "-";
+          row["Player 2 Shirt Size"] = entry.player2ShirtSize || "-";
+        }
+        return row;
+      });
+
+      const sheet = XLSX.utils.json_to_sheet(formatted);
+
+      // Auto column widths
+      const columnWidths = Object.keys(formatted[0]).map((key) => ({
+        wch:
+          Math.max(
+            key.length,
+            ...formatted.map((row) => row[key]?.toString().length ?? 0)
+          ) + 2, // +2 for padding
+      }));
+      sheet["!cols"] = columnWidths;
+
+      XLSX.utils.book_append_sheet(workbook, sheet, category.slice(0, 31)); // Excel sheet name limit
+    });
+
+    XLSX.writeFile(workbook, "TZY_JUNIOR_CUP_2025_REGISTRATIONS.xlsx");
+  }
+
+  const categoriesToCount =
+    selectedCategory === "ALL" ? CATEGORIES : [selectedCategory];
+  const totalEntriesCount = categoriesToCount.reduce((acc, category) => {
+    const entries = filterEntries(entriesByCategory[category] || [], category);
+    return acc + entries.length;
+  }, 0);
+
   return (
     <div className="p-6 min-h-screen mt-32">
       <h1 className="text-2xl font-bold mb-6">Admin – Player Registrations</h1>
 
-      {CATEGORIES.map((category) => (
-        <div key={category} className="mb-10">
-          <h2 className="text-xl font-semibold mb-3">{category}</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        {/* Left side: filter, dropdown, export */}
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <input
+            type="text"
+            placeholder="Filter by player name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="p-2 border rounded w-full sm:max-w-md"
+          />
 
-          {entriesByCategory[category]?.length > 0 ? (
-            <table className="w-full table-auto border">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border p-2">Player 1 Name</th>
-                  <th className="border p-2">IC</th>
-                  <th className="border p-2">Shirt Size</th>
-                  <th className="border p-2">Academy</th>
-                  {category.includes("DOUBLE") && (
-                    <>
-                      <th className="border p-2">Player 2 Name</th>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="p-2 border rounded"
+          >
+            <option value="ALL">All Categories</option>
+            {CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={exportToExcel}
+            className="bg-green-600 text-white px-4 py-1.5 rounded hover:bg-green-700 text-base text-nowrap"
+          >
+            Export to Excel
+          </button>
+        </div>
+
+        {/* Right side: total entries count */}
+        <span className="text-l text-gray-700 whitespace-nowrap">
+          Total Entries: <strong>{totalEntriesCount}</strong>
+        </span>
+      </div>
+
+      {(selectedCategory === "ALL" ? CATEGORIES : [selectedCategory]).map(
+        (category) => {
+          const filteredEntries = filterEntries(
+            entriesByCategory[category] || [],
+            category
+          );
+
+          return (
+            <div key={category} className="mb-10">
+              <h2 className="text-xl font-semibold mb-3">{category}</h2>
+
+              {filteredEntries.length > 0 ? (
+                <table className="w-full table-auto border">
+                  <thead>
+                    <tr className="bg-gray-200">
+                      <th className="border p-2">Player 1 Name</th>
                       <th className="border p-2">IC</th>
                       <th className="border p-2">Shirt Size</th>
-                    </>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {entriesByCategory[category].map((entry, idx) => (
-                  <tr key={idx} className="text-center">
-                    <td className="border p-2">{entry.player1Name}</td>
-                    <td className="border p-2">{entry.player1IC}</td>
-                    <td className="border p-2">{entry.player1ShirtSize}</td>
-                    <td className="border p-2">{entry.academy}</td>
-                    {category.includes("DOUBLE") && (
-                      <>
-                        <td className="border p-2">{entry.player2Name || "-"}</td>
-                        <td className="border p-2">{entry.player2IC || "-"}</td>
-                        <td className="border p-2">{entry.player2ShirtSize || "-"}</td>
-                      </>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-gray-500">No entries for this category.</p>
-          )}
-        </div>
-      ))}
+                      <th className="border p-2">Academy</th>
+                      {category.includes("DOUBLE") && (
+                        <>
+                          <th className="border p-2">Player 2 Name</th>
+                          <th className="border p-2">IC</th>
+                          <th className="border p-2">Shirt Size</th>
+                        </>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredEntries.map((entry, idx) => (
+                      <tr key={idx} className="text-center">
+                        <td className="border p-2">{entry.player1Name}</td>
+                        <td className="border p-2">{entry.player1IC}</td>
+                        <td className="border p-2">{entry.player1ShirtSize}</td>
+                        <td className="border p-2">{entry.academy}</td>
+                        {category.includes("DOUBLE") && (
+                          <>
+                            <td className="border p-2">
+                              {entry.player2Name || "-"}
+                            </td>
+                            <td className="border p-2">
+                              {entry.player2IC || "-"}
+                            </td>
+                            <td className="border p-2">
+                              {entry.player2ShirtSize || "-"}
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-gray-500">No entries for this category.</p>
+              )}
+            </div>
+          );
+        }
+      )}
     </div>
   );
 }
