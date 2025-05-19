@@ -60,7 +60,7 @@ const formSchema = z
     player2EmergencyContact: z.string().optional(),
     player2ShirtSize: z.string().optional(),
 
-    paymentProof: z.instanceof(FileList).optional(),
+    paymentProof: z.any().optional(),
   })
   .refine(
     (data) => {
@@ -81,7 +81,6 @@ const formSchema = z
       path: ["player2Name"], // You can change this to a custom field or leave as-is
     }
   );
-
 
 export default function RegistrationForm() {
   const [isDoubleCategory, setIsDoubleCategory] = useState(false);
