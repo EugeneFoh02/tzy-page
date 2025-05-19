@@ -21,7 +21,6 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 
-
 const NavLinks = [
   { title: "Calendar", path: "/calendar" },
   { title: "Winner", path: "/winner" },
@@ -62,11 +61,11 @@ const NavBar = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-  
+
       if (currentUser) {
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef);
-  
+
         if (!userSnap.exists()) {
           await setDoc(userRef, {
             email: currentUser.email,
@@ -84,10 +83,9 @@ const NavBar = () => {
         setRole(null);
       }
     });
-  
+
     return () => unsubscribe();
   }, []);
-  
 
   const handleLogin = async () => {
     try {
@@ -96,8 +94,6 @@ const NavBar = () => {
       console.error("Login failed:", error);
     }
   };
-  
-  
 
   const handleLogout = async () => {
     try {
@@ -108,7 +104,6 @@ const NavBar = () => {
       console.error("Logout failed:", error);
     }
   };
-  
 
   // Close dropdown if clicked outside
   useEffect(() => {
@@ -182,6 +177,18 @@ const NavBar = () => {
                     </NavigationMenuLink>
                   </NavigationMenuItem>
                 ))}
+                {role === "admin" && (
+                  <NavigationMenuItem key="admin">
+                    <NavigationMenuLink asChild>
+                      <Link
+                        href="/admin"
+                        className="text-black hover:text-gray-700 transition-colors"
+                      >
+                        Admin
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                )}
               </NavigationMenuList>
             </NavigationMenu>
 
