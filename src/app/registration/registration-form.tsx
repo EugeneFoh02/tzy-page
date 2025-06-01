@@ -32,6 +32,7 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ref, push } from "firebase/database";
 import { realtimeDb } from "@/lib/firebase"; // Adjust path as needed
+import { useRouter } from "next/navigation";
 
 const formSchema = z
   .object({
@@ -101,6 +102,8 @@ export default function RegistrationForm() {
     },
   });
 
+
+  const router = useRouter();
   function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const registrationsRef = ref(realtimeDb, "registrations");
@@ -111,6 +114,7 @@ export default function RegistrationForm() {
 
       alert("Registration submitted successfully!");
       form.reset(); // Optional: reset form after submit
+      router.push("/successful"); // Redirect to success page
     } catch (error) {
       console.error("Error saving to Firebase:", error);
       alert("Failed to submit registration. Please try again.");
