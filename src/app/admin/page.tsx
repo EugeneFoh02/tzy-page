@@ -20,12 +20,17 @@ const CATEGORIES = [
 
 export default function AdminEntriesPage() {
   const router = useRouter();
-  const [entriesByCategory, setEntriesByCategory] = useState<Record<string, any[]>>({});
+  const [entriesByCategory, setEntriesByCategory] = useState<
+    Record<string, any[]>
+  >({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [shirtSizeFilter, setShirtSizeFilter] = useState("ALL");
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "asc" | "desc";
+  } | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -69,12 +74,14 @@ export default function AdminEntriesPage() {
       const matchesName =
         !searchTerm ||
         entry.player1Name?.toLowerCase().includes(lowerTerm) ||
-        (category.includes("DOUBLE") && entry.player2Name?.toLowerCase().includes(lowerTerm));
+        (category.includes("DOUBLE") &&
+          entry.player2Name?.toLowerCase().includes(lowerTerm));
 
       const matchesShirt =
         shirtSizeFilter === "ALL" ||
         entry.player1ShirtSize === shirtSizeFilter ||
-        (category.includes("DOUBLE") && entry.player2ShirtSize === shirtSizeFilter);
+        (category.includes("DOUBLE") &&
+          entry.player2ShirtSize === shirtSizeFilter);
 
       return matchesName && matchesShirt;
     });
@@ -94,10 +101,14 @@ export default function AdminEntriesPage() {
 
   function exportToExcel() {
     const workbook = XLSX.utils.book_new();
-    const categoriesToExport = selectedCategory === "ALL" ? CATEGORIES : [selectedCategory];
+    const categoriesToExport =
+      selectedCategory === "ALL" ? CATEGORIES : [selectedCategory];
 
     categoriesToExport.forEach((category) => {
-      const entries = filterEntries(entriesByCategory[category] || [], category);
+      const entries = filterEntries(
+        entriesByCategory[category] || [],
+        category
+      );
       if (entries.length === 0) return;
 
       const formatted = entries.map((entry) => {
@@ -118,7 +129,11 @@ export default function AdminEntriesPage() {
       const sheet = XLSX.utils.json_to_sheet(formatted);
 
       const columnWidths = Object.keys(formatted[0]).map((key) => ({
-        wch: Math.max(key.length, ...formatted.map((row) => row[key]?.toString().length ?? 0)) + 2,
+        wch:
+          Math.max(
+            key.length,
+            ...formatted.map((row) => row[key]?.toString().length ?? 0)
+          ) + 2,
       }));
       sheet["!cols"] = columnWidths;
 
@@ -136,7 +151,8 @@ export default function AdminEntriesPage() {
     );
   };
 
-  const categoriesToCount = selectedCategory === "ALL" ? CATEGORIES : [selectedCategory];
+  const categoriesToCount =
+    selectedCategory === "ALL" ? CATEGORIES : [selectedCategory];
   const totalEntriesCount = categoriesToCount.reduce((acc, category) => {
     const entries = filterEntries(entriesByCategory[category] || [], category);
     return acc + entries.length;
@@ -146,11 +162,18 @@ export default function AdminEntriesPage() {
     shirtSizeFilter === "ALL"
       ? "N/A"
       : categoriesToCount.reduce((acc, category) => {
-          const entries = filterEntries(entriesByCategory[category] || [], category);
+          const entries = filterEntries(
+            entriesByCategory[category] || [],
+            category
+          );
           const count = entries.reduce((count, entry) => {
-            let player1Match = entry.player1ShirtSize === shirtSizeFilter ? 1 : 0;
+            let player1Match =
+              entry.player1ShirtSize === shirtSizeFilter ? 1 : 0;
             let player2Match =
-              category.includes("DOUBLE") && entry.player2ShirtSize === shirtSizeFilter ? 1 : 0;
+              category.includes("DOUBLE") &&
+              entry.player2ShirtSize === shirtSizeFilter
+                ? 1
+                : 0;
             return count + player1Match + player2Match;
           }, 0);
           return acc + count;
@@ -189,11 +212,13 @@ export default function AdminEntriesPage() {
             className="p-2 border rounded"
           >
             <option value="ALL">All Shirt Sizes</option>
-            {["3XS", "2XS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "5XL"].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
+            {["3XS", "2XS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "5XL"].map(
+              (size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              )
+            )}
           </select>
 
           <button
@@ -217,38 +242,34 @@ export default function AdminEntriesPage() {
         </div>
       </div>
 
-      {(selectedCategory === "ALL" ? CATEGORIES : [selectedCategory]).map((category) => {
-        const filteredEntries = filterEntries(entriesByCategory[category] || [], category);
+      {(selectedCategory === "ALL" ? CATEGORIES : [selectedCategory])
+        // Filter categories where filteredEntries > 0
+        .filter((category) => {
+          const filteredEntries = filterEntries(
+            entriesByCategory[category] || [],
+            category
+          );
+          return filteredEntries.length > 0;
+        })
+        .map((category) => {
+          const filteredEntries = filterEntries(
+            entriesByCategory[category] || [],
+            category
+          );
 
-        return (
-          <div key={category} className="mb-10">
-            <h2 className="text-xl font-semibold mb-3">{category}</h2>
+          return (
+            <div key={category} className="mb-10">
+              <h2 className="text-xl font-semibold mb-3">{category}</h2>
 
-            {filteredEntries.length > 0 ? (
-              <table className="w-full table-auto border">
-                <thead>
-                  <tr className="bg-gray-200 cursor-pointer text-center">
-                    {[
-                      { label: "Player 1 Name", key: "player1Name" },
-                      { label: "IC", key: "player1IC" },
-                      { label: "Shirt Size", key: "player1ShirtSize" },
-                      { label: "Academy", key: "academy" },
-                    ].map((col) => (
-                      <th
-                        key={col.key}
-                        className="border p-2 hover:bg-gray-300"
-                        onClick={() => handleSort(col.key)}
-                      >
-                        {col.label}{" "}
-                        {sortConfig?.key === col.key ? (sortConfig.direction === "asc" ? "▲" : "▼") : ""}
-                      </th>
-                    ))}
-
-                    {category.includes("DOUBLE") &&
-                      [
-                        { label: "Player 2 Name", key: "player2Name" },
-                        { label: "IC", key: "player2IC" },
-                        { label: "Shirt Size", key: "player2ShirtSize" },
+              {filteredEntries.length > 0 ? (
+                <table className="w-full table-auto border">
+                  <thead>
+                    <tr className="bg-gray-200 cursor-pointer text-center">
+                      {[
+                        { label: "Player 1 Name", key: "player1Name" },
+                        { label: "IC", key: "player1IC" },
+                        { label: "Shirt Size", key: "player1ShirtSize" },
+                        { label: "Academy", key: "academy" },
                       ].map((col) => (
                         <th
                           key={col.key}
@@ -263,32 +284,58 @@ export default function AdminEntriesPage() {
                             : ""}
                         </th>
                       ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEntries.map((entry, idx) => (
-                    <tr key={idx} className="text-center">
-                      <td className="border p-2">{entry.player1Name}</td>
-                      <td className="border p-2">{entry.player1IC}</td>
-                      <td className="border p-2">{entry.player1ShirtSize}</td>
-                      <td className="border p-2">{entry.academy}</td>
-                      {category.includes("DOUBLE") && (
-                        <>
-                          <td className="border p-2">{entry.player2Name || "-"}</td>
-                          <td className="border p-2">{entry.player2IC || "-"}</td>
-                          <td className="border p-2">{entry.player2ShirtSize || "-"}</td>
-                        </>
-                      )}
+
+                      {category.includes("DOUBLE") &&
+                        [
+                          { label: "Player 2 Name", key: "player2Name" },
+                          { label: "IC", key: "player2IC" },
+                          { label: "Shirt Size", key: "player2ShirtSize" },
+                        ].map((col) => (
+                          <th
+                            key={col.key}
+                            className="border p-2 hover:bg-gray-300"
+                            onClick={() => handleSort(col.key)}
+                          >
+                            {col.label}{" "}
+                            {sortConfig?.key === col.key
+                              ? sortConfig.direction === "asc"
+                                ? "▲"
+                                : "▼"
+                              : ""}
+                          </th>
+                        ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p className="text-gray-500">No entries for this category.</p>
-            )}
-          </div>
-        );
-      })}
+                  </thead>
+                  <tbody>
+                    {filteredEntries.map((entry, idx) => (
+                      <tr key={idx} className="text-center">
+                        <td className="border p-2">{entry.player1Name}</td>
+                        <td className="border p-2">{entry.player1IC}</td>
+                        <td className="border p-2">{entry.player1ShirtSize}</td>
+                        <td className="border p-2">{entry.academy}</td>
+                        {category.includes("DOUBLE") && (
+                          <>
+                            <td className="border p-2">
+                              {entry.player2Name || "-"}
+                            </td>
+                            <td className="border p-2">
+                              {entry.player2IC || "-"}
+                            </td>
+                            <td className="border p-2">
+                              {entry.player2ShirtSize || "-"}
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-gray-500">No entries for this category.</p>
+              )}
+            </div>
+          );
+        })}
     </div>
   );
 }
