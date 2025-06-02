@@ -20,13 +20,12 @@ const HeroSection = () => {
           </p>
         </div>
         <div className="col-span-4 place-self-center mt-4 lg:mt-0">
-          <div className="rounded-full bg-white w-[250px] h-[250px] lg:w-[350px] lg:h-[350px] relative">
+          <div className="rounded-full bg-white w-[200px] h-[200px] sm:w-[250px] sm:h-[250px] lg:w-[300px] lg:h-[300px] relative">
             <Image
               src="/images/logo.png"
               alt="hero image"
-              width={300}
-              height={300}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"
+              fill
+              className="object-contain rounded-full"
             />
           </div>
         </div>

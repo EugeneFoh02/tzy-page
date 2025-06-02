@@ -25,7 +25,7 @@ const NavLinks = [
   { title: "Calendar", path: "/calendar" },
   { title: "Winner", path: "/winner" },
   { title: "Announcement", path: "/announcement" },
-  { title: "Contact", path: "#contact" },
+  
 ];
 
 const PartnerLinks = [
@@ -128,13 +128,13 @@ const NavBar = () => {
     <nav
       className={`fixed mx-auto top-0 left-0 right-0 z-10 transition-colors duration-300`}
     >
-      <Link href="/" className="absolute left-4 top-2 z-20">
+      <Link href="/" className="absolute left-10 md:left-3 top-2 z-20">
         <Image
           src="/images/logo.png"
           alt="Logo"
           width={130}
           height={130}
-          className="object-contain ml-10"
+          className="object-contain  ml-[-8px] mt-[-8px] md:mt-0 md:ml-10"
         />
       </Link>
 
@@ -150,7 +150,7 @@ const NavBar = () => {
           <div className="md:hidden absolute right-4 top-4">
             <button
               onClick={() => setNavbarOpen((prev) => !prev)}
-              className="flex items-center px-3 py-2 border rounded border-slate-200 text-slate-200 hover:text-white hover:border-white"
+              className="flex items-center px-3 py-2 border rounded border-gray-800 text-gray-800 hover:text-black hover:border-black"
               aria-label="Toggle menu"
             >
               {navbarOpen ? (
@@ -262,9 +262,9 @@ const NavBar = () => {
             : "bg-gradient-to-b from-[#E9EFFD] to-[#fcfdff]"
         } py-2 min-h-[40px]`}
       >
-        <div className="flex items-center justify-center gap-8 px-4 mx-auto ml-[120px] md:ml-[140px]">
+        <div className="hidden md:flex items-center justify-center gap-8 px-4 mx-auto ml-[120px] md:ml-[140px]">
           <div className="text-black text-lg font-semibold">Partners:</div>
-          <div className="hidden md:flex space-x-4">
+          <div className="flex space-x-4">
             {PartnerLinks.map((partner, index) => (
               <span key={index} className="text-black">
                 {partner.title}
@@ -289,6 +289,17 @@ const NavBar = () => {
                 </Link>
               </li>
             ))}
+            {role === "admin" && (
+              <li key="admin-link">
+                <Link
+                  href="/admin"
+                  onClick={() => setNavbarOpen(false)}
+                  className="text-black hover:text-gray-700 transition-colors block"
+                >
+                  Admin
+                </Link>
+              </li>
+            )}
             {PartnerLinks.map((partner, index) => (
               <li key={`partner-${index}`}>
                 <span className="text-black block">{partner.title}</span>
